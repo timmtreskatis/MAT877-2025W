@@ -8,21 +8,31 @@ for exponential decay.
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Parameters
-decay_rate = 2.
-u_init = 6.
-t_final = 5.
 
-num_steps = 20
-dt = t_final / num_steps
+def forward_euler(decay_rate, u_init, t_final, num_steps):
+    dt = t_final / num_steps
+    t_vals = np.linspace(0., t_final, num_steps + 1)
 
-t_vals = np.linspace(0., t_final, num_steps + 1)
-u_vals = u_init * np.ones_like(t_vals)
+    # Initialise entire array with initial value
+    u_vals = u_init * np.ones_like(t_vals)
 
-for n in range(num_steps):
-    u_vals[n+1] = (1. - decay_rate*dt)*u_vals[n]
+    for n in range(num_steps):
+        u_vals[n+1] = (1. - decay_rate*dt)*u_vals[n]
 
-plt.plot(t_vals, u_vals)
-plt.xlabel("t")
-plt.ylabel("u(t)")
-plt.show()
+    return t_vals, u_vals
+
+def plot_numerical_solution(t_vals, u_vals):
+    plt.plot(t_vals, u_vals)
+    plt.xlabel("t")
+    plt.ylabel("u(t)")
+    plt.show()
+
+if __name__ == "__main__":
+    # Parameters
+    decay_rate = 2.
+    u_init = 6.
+    t_final = 5.
+    num_steps = 20
+
+    t_vals, u_vals = forward_euler(decay_rate, u_init, t_final, num_steps)
+    plot_numerical_solution(t_vals, u_vals)
