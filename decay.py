@@ -1,6 +1,6 @@
 """
 Solve the ODE
-    du/dt + r*u = 0 in ]0,T[
+    du/dt + r*u = f in ]0,T[
     u(0) = u0
 for exponential decay.
 """
@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def forward_euler(decay_rate, u_init, t_final, num_steps):
+def forward_euler(decay_rate, source_term, u_init, t_final, num_steps):
     dt = t_final / num_steps
     t_vals = np.linspace(0., t_final, num_steps + 1)
 
@@ -17,7 +17,7 @@ def forward_euler(decay_rate, u_init, t_final, num_steps):
     u_vals = u_init * np.ones_like(t_vals)
 
     for n in range(num_steps):
-        u_vals[n+1] = (1. - decay_rate*dt)*u_vals[n]
+        u_vals[n+1] = dt*source_term(t_vals[n]) + (1. - decay_rate*dt)*u_vals[n]
 
     return t_vals, u_vals
 
@@ -30,9 +30,12 @@ def plot_numerical_solution(t_vals, u_vals):
 if __name__ == "__main__":
     # Parameters
     decay_rate = 2.
-    u_init = 6.
-    t_final = 5.
-    num_steps = 20
+    u_init = 0.
+    t_final = 10.
+    num_steps = 200
 
-    t_vals, u_vals = forward_euler(decay_rate, u_init, t_final, num_steps)
+    def source_term(t):
+        return np.cos(t) + 2. * np.sin(t)
+
+    t_vals, u_vals = forward_euler(decay_rate, source_term, u_init, t_final, num_steps)
     plot_numerical_solution(t_vals, u_vals)
