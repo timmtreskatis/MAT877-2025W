@@ -32,10 +32,20 @@ if __name__ == "__main__":
     decay_rate = 2.
     u_init = 0.
     t_final = 10.
-    num_steps = 200
+    num_steps = 400
 
     def source_term(t):
         return np.cos(t) + 2. * np.sin(t)
 
-    t_vals, u_vals = forward_euler(decay_rate, source_term, u_init, t_final, num_steps)
-    plot_numerical_solution(t_vals, u_vals)
+    def u_manufactured(t):
+        return np.sin(t)
+
+    t_vals, u_numerical = forward_euler(decay_rate, source_term, u_init, t_final, num_steps)
+
+
+    u_analytical = u_manufactured(t_vals)
+    err = np.max(np.abs(u_numerical - u_analytical))
+
+    print("Maximum error:", err)
+
+    plot_numerical_solution(t_vals, u_numerical)
