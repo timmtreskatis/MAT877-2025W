@@ -41,11 +41,4 @@ if __name__ == "__main__":
         return np.sin(t)
 
     t_vals, u_numerical = forward_euler(decay_rate, source_term, u_init, t_final, num_steps)
-
-
-    u_analytical = u_manufactured(t_vals)
-    err = np.max(np.abs(u_numerical - u_analytical))
-
-    print("Maximum error:", err)
-
     plot_numerical_solution(t_vals, u_numerical)
