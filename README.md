@@ -1,1 +1,3 @@
-Collection of programs developed during live coding sessions in class for MAT877 (Simulation Techniques) in Winter 2025
+# MAT877 Simulation Techniques | Winter 2025/2026
+
+Collection of programs developed during live coding sessions in class.
