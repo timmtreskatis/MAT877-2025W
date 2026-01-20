@@ -64,13 +64,13 @@ L = f * v * dx + g * v * ds
 problem = LinearProblem(
     a,
     L,
-    # petsc_options={"ksp_type": "none", "pc_type": "cholesky"}, # Cholesky factorisation
+    petsc_options={"ksp_type": "none", "pc_type": "cholesky"}, # Cholesky factorisation
     # petsc_options={"ksp_type": "richardson", "pc_type": "gamg", "ksp_monitor": None}, # Algebraic multigrid (PETSc implementation)
     # petsc_options={"ksp_type": "richardson", "pc_type": "hypre", "pc_hypre_type": "boomeramg", "ksp_monitor": None}, # Algebraic multigrid (boomerAMG implementation from the HYPRE package)
     # petsc_options={"ksp_type": "cg", "pc_type": "none", "ksp_monitor": None}, # CG
     # petsc_options={"ksp_type": "cg", "pc_type": "jacobi", "ksp_monitor": None}, # CG with Jacobi (diagonal) preconditioning
     # petsc_options={"ksp_type": "cg", "pc_type": "icc", "ksp_monitor": None}, # CG with incomplete Cholesky factorisation as preconditioner
-    petsc_options={"ksp_type": "cg", "pc_type": "hypre", "pc_hypre_type": "boomeramg", "ksp_monitor": None}, # CG with 1 AMG iteratation as preconditioner
+    # petsc_options={"ksp_type": "cg", "pc_type": "hypre", "pc_hypre_type": "boomeramg", "ksp_monitor": None}, # CG with 1 AMG iteratation as preconditioner
     petsc_options_prefix="Poisson",
 )
 uh = problem.solve()
