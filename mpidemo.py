@@ -10,6 +10,7 @@ size = comm.size
 
 print("Hello from rank", rank, "out of", size - 1)
 
+
 # Scattering: one root process sends DIFFERENT PIECES OF DATA to all processes in the communicator
 if rank == 0:
     data = [1, 2, 3, 4]
@@ -33,7 +34,7 @@ results = comm.gather(b, root=0)
 print("Rank", rank, "after gathering uses results =", results)
 
 
-# Broadcasting: one process sends THE SAME DATA to all others in the communicator
+# Broadcasting: one process sends THE SAME DATA to all processes in the communicator
 if rank == 0:
     average = np.mean(results)
 else:
