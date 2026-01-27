@@ -45,3 +45,30 @@ print("Rank", rank, "before broadcasting knows that the average is", average)
 average = comm.bcast(average, root=0)
 
 print("Rank", rank, "after broadcasting knows that the average is", average)
+
+comm.barrier()
+
+# Sending and receiving
+if rank == 1:
+    message_out = "Let's go to the movies!"
+    comm.send(message_out, dest=3)
+else:
+    message_out = None
+
+if rank == 3:
+    message_in = comm.recv(source=1)
+else:
+    message_in = None
+
+print("Rank", rank, "has received the message ", message_in)
+
+
+comm.barrier()
+
+# Simultaneous sending and receiving
+message_out = "Join me for lunch at two! This is an invitation from Rank " + str(rank)
+message_in = comm.sendrecv(
+    message_out, dest=(rank + 1) % size, source=(rank - 1) % size
+)
+
+print("Rank", rank, "has received the message ", message_in)
