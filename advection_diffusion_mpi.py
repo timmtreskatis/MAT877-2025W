@@ -6,11 +6,27 @@ in a rectangular channel with boundary conditions
     -D ∂u/∂n + u a·n = 0 on the walls
     -D ∂u/∂n = 0 on the outlet
 using finite elements.
+
+This code does the same as advection_diffusion.py, but LinearProblem has been replaced with a more low-level, own implementation to
+    (1) compile the bilinear and linear forms
+    (2) allocate a PETSc matrix and vector
+    (3) assemble the matrix and the vector from the bilinear and linear forms
+    (4) apply Dirichlet boundary conditions by lifting
+    (5) configure the linear solver options
+    (6) solve the linear system of equations
+in a fully MPI-compatible way.
 """
 
 from mpi4py import MPI
+from petsc4py import PETSc
 from dolfinx import fem, io, mesh
-from dolfinx.fem.petsc import LinearProblem
+from dolfinx.fem.petsc import (
+    apply_lifting,
+    assemble_matrix,
+    assemble_vector,
+    create_vector,
+    set_bc,
+)
 from ufl import (
     as_vector,
     dot,
@@ -132,23 +148,37 @@ dirichlet_dofs = fem.locate_dofs_topological(V, fdim, facet_tags.find(1))
 
 bc = fem.dirichletbc(u_D, dirichlet_dofs)
 
-# Solve linear system of equations
-problem = LinearProblem(
-    a,
-    L,
-    bcs=[bc],
-    petsc_options={
-        "ksp_type": "gmres",
-        "pc_type": "hypre",
-        "pc_hypre_type": "boomeramg",
-        "pc_hypre_boomeramg_smooth_type": "ilu",
-        "ksp_monitor": None,
-    },
-    petsc_options_prefix="advection-diffusion",
-)
+# Compile weak formulation into bilinear and linear forms
+bilinear_form = fem.form(a)
+linear_form = fem.form(L)
 
-uh = problem.solve()
+# Create PETSc matrix and vector for the linear system of equations
+A = assemble_matrix(bilinear_form, bcs=[bc]) # adds local contributions to the matrix (from own rank)
+A.assemble() # adds contibutions from other ranks
+b = create_vector(fem.extract_function_spaces(linear_form)) # creates a PETSc vector of the right length initialised with zeros
+assemble_vector(b, linear_form) # adds all contributions (owned and from other processes) to the vector
+
+# Apply Dirichlet boundary condition to the vector
+apply_lifting(b, [bilinear_form], [[bc]]) # modifies the vector in rows where no Dirichlet data are imposed; matrix-vector products end up partially in owned entries, partially in ghost entries of b
+b.ghostUpdate(addv=PETSc.InsertMode.ADD_VALUES, mode=PETSc.ScatterMode.REVERSE) # ghost entries of b are added to owned entries of b; owned entries now have the correct data
+set_bc(b, [bc]) # modifies the vector in rows where Dirichlet data are imposed: previous vector entries are overwritten with Dirichlet data
+
+# Create and configure a linear solver
+advection_diffusion_solver = PETSc.KSP().create(domain.comm)
+advection_diffusion_solver.setOperators(A)
+opts = PETSc.Options()
+opts["ksp_type"] = "gmres"
+opts["pc_type"] = "hypre"
+opts["pc_hypre_type"] = "boomeramg"
+opts["pc_hypre_boomeramg_smooth_type"] = "ilu"
+opts["ksp_monitor"] = None
+advection_diffusion_solver.setFromOptions()
+
+# Solve linear problem
+uh = fem.Function(V)
 uh.name = "Concentration"
+advection_diffusion_solver.solve(b, uh.x.petsc_vec)
+uh.x.scatter_forward() # solution values are copied from owned entries to ghost entries; ghost entries now have the correct data
 
 # Export solution
 results_folder = Path("results")
