@@ -7,7 +7,7 @@ and boundary conditions
     u = u_D on the inlet
     -D ∂u/∂n + u a·n = 0 on the walls
     -D ∂u/∂n = 0 on the outlet
-using finite elements in space and the backward Euler method in time.
+using finite elements in space and the Crank-Nicolson method in time.
 """
 
 from mpi4py import MPI
@@ -142,12 +142,17 @@ ds = Measure("ds", domain, subdomain_data=facet_tags)
 
 a = (
     fem.Constant(domain, 1.0 / dt) * u * v * dx
-    + diffusivity * dot(grad(u), grad(v)) * dx
-    - u * dot(advection_velocity, grad(v)) * dx
-    + u * dot(advection_velocity, n) * v * ds(3)
+    + 1/2 * diffusivity * dot(grad(u), grad(v)) * dx
+    - 1/2 * u * dot(advection_velocity, grad(v)) * dx
+    + 1/2 * u * dot(advection_velocity, n) * v * ds(3)
 )
 
-L = fem.Constant(domain, 1.0 / dt) * uh_old * v * dx
+L = (
+    fem.Constant(domain, 1.0 / dt) * uh_old * v * dx
+    - 1/2 * diffusivity * dot(grad(uh_old), grad(v)) * dx
+    + 1/2 * uh_old * dot(advection_velocity, grad(v)) * dx
+    - 1/2 * uh_old * dot(advection_velocity, n) * v * ds(3)
+)
 
 
 # Dirichlet boundary condition
@@ -183,6 +188,7 @@ opts["pc_type"] = "hypre"
 opts["pc_hypre_type"] = "boomeramg"
 opts["pc_hypre_boomeramg_smooth_type"] = "ilu"
 opts["ksp_monitor"] = None
+opts["ksp_initial_guess_nonzero"] = True # "Warm start": don't use the default zero vector as initial guess for GMRES, but uh from the previous time step
 advection_diffusion_solver.setFromOptions()
 
 
