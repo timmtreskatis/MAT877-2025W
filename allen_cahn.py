@@ -78,9 +78,9 @@ problem = NonlinearProblem(  # NB: FEniCSx has automatic differentiation built i
         "snes_type": "newtonls",  # Newton's method with line search for more robust convergence
         "snes_monitor": None,
         "ksp_type": "cg",  # The linear system of equations in each Newton iteration is symmetric positive definite and can be solved with CG
+        "ksp_monitor": None,
         "pc_type": "hypre",
         "pc_hypre_type": "boomeramg",
-        "ksp_monitor": None,
     },
     petsc_options_prefix="newton_",
 )
